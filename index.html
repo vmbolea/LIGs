@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LIGs para Josemy</title>
+  <!-- Incluye la biblioteca Leaflet desde un CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Incluye la biblioteca jQuery desde un CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <style>
+    #map {
+      height: 100vh; /* 100% de la altura de la ventana */
+      width: 100%;   /* 100% del ancho de la ventana */
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+  // Crea un mapa en el contenedor con id "map"
+  var map = L.map('map').setView([41.505, -1], 7); // Puedes ajustar las coordenadas y el nivel de zoom
+
+  // Añade una capa de mapa base de OpenStreetMap
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 20
+  }).addTo(map);
+
+  // Carga y añade el archivo GeoJSON "ligs_aragon.geojson" al mapa usando $.getJSON
+  $.getJSON('ligs_aragon.geojson', function(data) {
+    try {
+      // Verifica si la propiedad "features" está presente en el objeto GeoJSON
+      if (data.hasOwnProperty('features')) {
+        // Crea una capa GeoJSON y añádela al mapa
+        var ligsLayer = L.geoJSON(data, {
+          style: function(feature) {
+            return {
+              color: '#333',   // Color del borde
+              weight: 2,       // Grosor del borde
+              fillColor: '#999',  // Color de relleno
+              fillOpacity: 0.7   // Opacidad del relleno
+            };
+          },
+          onEachFeature: function(feature, layer) {
+            // Añade un pop-up con información al hacer clic
+            if (feature.properties && feature.properties.SITENAME) {
+              layer.bindPopup('<b>' + feature.properties.SITENAME + '</b><br>' +
+                'Area (m2): <b>' + feature.properties.Shape_Area + '</b><br>' +
+                'Longitud: <b>' + feature.properties.LONGITUDE + '</b><br>' +
+                'Latitud: <b>' + feature.properties.LATITUDE + '</b><br>');
+            }
+          }
+        }).addTo(map);
+
+        // Crea una capa GeoJSON para las visitas guiadas y añádela al mapa
+        var visitasGuiadas = {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "properties": {
+                "Nombre": "Visita Láminas Cabalgantes de Guara",
+                "Fecha": "15/01/2024",
+                "Hora": "10:00",
+                "Precio": "10€",
+                "Publico": "Todos los públicos"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [-0.214, 42.28]  // Ajusta las coordenadas según tus necesidades
+              }
+            },
+            {
+              "type": "Feature",
+              "properties": {
+                "Nombre": "Visita Areniscas de Piracés",
+                "Fecha": "15/03/2024",
+                "Hora": "11:00",
+                "Precio": "5€",
+                "Publico": "Adultos"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [-0.31, 42.00]  // Ajusta las coordenadas según tus necesidades
+              }
+            },
+            {
+              "type": "Feature",
+              "properties": {
+                "Nombre": "Visita Mallos de Riglos",
+                "Fecha": "15/04/2024",
+                "Hora": "12:00",
+                "Precio": "15€",
+                "Publico": "Niños"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [-0.71, 42.34]  // Ajusta las coordenadas según tus necesidades
+              }
+            }
+          ]
+        };
+
+        var visitasLayer = L.geoJSON(visitasGuiadas, {
+          pointToLayer: function(feature, latlng) {
+            return L.marker(latlng);
+          },
+          onEachFeature: function(feature, layer) {
+            // Añade un pop-up con información al hacer clic
+            if (feature.properties && feature.properties.Nombre) {
+              layer.bindPopup('<b>Visita Guiada</b><br>' +
+                'Nombre: <b>' + feature.properties.Nombre + '</b><br>'+
+                'Fecha: <b>' + feature.properties.Fecha + '</b><br>'+
+                'Hora: <b>' + feature.properties.Hora + '</b><br>'+
+                'Precio: <b>' + feature.properties.Precio + '</b><br>'+
+                'Público: <b>' + feature.properties.Publico + '</b><br>');
+            }
+          }
+        }).addTo(map);
+
+        // Añade un control de capas (layers) al mapa
+        var baseLayers = {
+          "Mapa Base": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+          })
+        };
+
+        var overlays = {
+          "LIGs": ligsLayer,
+          "Visitas Guiadas": visitasLayer
+        };
+
+        L.control.layers(baseLayers, overlays).addTo(map);
+
+      } else {
+        console.error('GeoJSON file (ligs_aragon.geojson) does not contain a "features" property.');
+      }
+    } catch (error) {
+      console.error('Error processing GeoJSON (ligs_aragon.geojson):', error);
+    }
+  });
+</script>
+
+</body>
+</html>
